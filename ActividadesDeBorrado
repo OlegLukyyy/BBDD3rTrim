@@ -1,0 +1,54 @@
+# Nivel 1: Borrado Básico y Vaciado
+
+## Ejercicio 1 
+```
+Elimina de la tabla productos el registro con id = 5.
+```
+```mysql
+DELETE FROM detallespedidos WHERE idProducto = 5;
+DELETE FROM productos WHERE id = 5;
+```
+
+## Ejercicio 2
+```
+La tabla auditoria-sistema está creciendo demasiado. Utiliza TRUNCATE para vaciarla completamente y 
+explica qué ocurre con el contador del campo id tras ejecutarlo.
+```
+```mysql
+TRUNCATE table auditoriassistemas;
+-- el contador se reinicia a 1 
+```
+
+## Ejercicio 3
+```
+Elimina todos los registros de la tabla localidades cuyo nombre sea 'Madrid'.
+```
+```mysql
+TRUNCATE table auditoriassistemas;
+-- el contador se reinicia a 1 
+```
+
+## Ejercicio 4
+```
+Explica por qué es más peligroso ejecutar un DELETE FROM clientes; (sin WHERE) que un 
+TRUNCATE TABLE clientes; a nivel de registros de log y recuperación de datos.
+```
+```mysql
+-- DELETE es peligroso para el rendimiento y los logs (escribe demasiado)
+-- TRUNCATE es peligroso para la recuperación (no hay vuelta atrás)
+```
+# Nivel 2: Filtros Avanzados y Rangos
+## Ejercicio 5
+```
+Elimina de la tabla pagos todos los registros realizados entre el '2025-01-01' y el '2025-01-15'.
+```
+```mysql
+DELETE FROM pagos where fecha between '2025-01-01' AND '2025-01-15';
+```
+## Ejercicio 6
+```
+Elimina los productos cuyos id sean 2, 4 y 6 en una sola sentencia SQL.
+```
+```mysql
+DELETE FROM productos where id in (2,4,6);
+```
