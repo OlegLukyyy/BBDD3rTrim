@@ -52,3 +52,112 @@ Elimina los productos cuyos id sean 2, 4 y 6 en una sola sentencia SQL.
 ```mysql
 DELETE FROM productos where id in (2,4,6);
 ```
+## Ejercicio 7
+```
+Elimina de la tabla direcciones todos los registros cuyo código postal (cp) comience por '28'.
+```
+```mysql
+delete from direcciones where cp like "28%"
+```
+## Ejercicio 8
+```
+Elimina de la relación empleados-oficinas aquellos registros que tengan una fechaFin anterior al año 2024.
+```
+```mysql
+delete from empleadosoficinas WHERE YEAR(fechaFin)<2024
+```
+# Nivel 3: Integridad y Borrado Lógico
+## Ejercicio 9
+```
+Intenta eliminar el cliente con id = 1. Documenta el error de restricción de integridad debido a que tiene pedidos asociados.
+```
+```mysql
+-- Cannot delete or update a parent row: a foreign key constraint fails (`nexus`.`clientes`, 
+-- CONSTRAINT `fk_cli_fact` FOREIGN KEY (`idDireccionFacturacion`) REFERENCES `direcciones` (`id`))
+```
+## Ejercicio 10
+```
+En lugar de eliminar físicamente al Cliente 2, realiza un "borrado lógico" cambiando su estado a activo = 0.
+¿Por qué es esta la opción preferida en los ERPs profesionales?
+```
+```mysql
+update clientes
+set activo =0;
+```
+## Ejercicio 11
+```
+Elimina los productos que tengan un stock = 0 y cuyo precioActual sea inferior a 10.00€.
+```
+```mysql
+delete from productos where stock=0 and precioActual<10
+```
+## Ejercicio 12
+```
+Busca en la tabla clientes aquellos que tengan el idDireccionEntrega como NULL 
+y elimina sus registros en la tabla direcciones (si existen).
+```
+```mysql
+delete d from direcciones d
+INNER JOIN clientes c ON c.id= d.idCliente 
+where c.idDireccionEntrega is null
+```
+## Nivel 4: JOINs e Historización
+
+## Ejercicio 13
+```
+Elimina todos los registros de la relación detalles-pedidos que pertenezcan a pedidos realizados por el Cliente 3.
+```
+```mysql
+delete dp from detallespedidos dp
+INNER JOIN pedidos p ON p.id= dp.idPedido 
+where p.idCliente=3;
+```
+## Ejercicio 14
+```
+Antes de borrar, copia todos los registros de la tabla pedidos del año 2024 a una tabla llamada historico-pedidos (supón que la tabla ya existe con la misma estructura).
+```
+```mysql
+insert into historicoPedidos 
+SELECT * FROM pedidos 
+WHERE YEAR(fecha)=2024;
+```
+## Ejercicio 15
+```
+Tras asegurar la copia en el ejercicio anterior, elimina físicamente los pedidos de 2024 de la tabla original.
+```
+```mysql
+delete  from pedidos
+where YEAR(fecha)=2024;
+```
+## Ejercicio 16
+```
+Elimina a los empleados que trabajen en la oficina de 'Barcelona' utilizando un DELETE con INNER JOIN entre empleados, empleados-oficinas y oficinas.
+```
+```mysql
+delete  from pedidos
+where YEAR(fecha)=2024;
+```
+## Ejercicio 17
+```
+Elimina de la tabla productos aquellos que no existan en la tabla detalles-pedidos utilizando una subconsulta con NOT IN.
+```
+```mysql
+delete pr from productos pr 
+where pr.id not in 
+    (Select dp1.idProducto 
+    from detallespedidos dp1 
+    where dp1.idProducto is not null)
+```
+## Ejercicio 18
+```
+Elimina la oficina 'OFI-03'. Si el sistema da error por relaciones en empleados-oficinas, elimina primero las relaciones y luego la entidad principal.
+```
+```mysql
+DELETE eo  
+FROM empleadosoficinas eo
+INNER JOIN oficinas of ON of.id=eo.idOficina 
+where of.codigo='OFI-03';
+DELETE of
+FROM oficinas of
+WHERE codigo="OFI-03"
+```
