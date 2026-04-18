@@ -1,0 +1,101 @@
+# Nivel 1: Restricciones de Integridad
+## Actividad 1 
+```
+Intenta eliminar la localidad con id = 1 (Algeciras). Explica por qué el sistema impide la operación basándote en la tabla direcciones.
+```
+```mysql
+delete from localidades
+where id=1;
+-- Falla debido a que la fila actua como clave foránea en la tabla de direcciones, que a su vez referencia a localidades
+```
+## Actividad 2
+```
+Intenta cambiar el id de la oficina 'OFI-01' por id = 99. ¿Qué error devuelve MySQL al existir empleados vinculados en la relación empleadosoficinas?
+```
+```mysql
+UPDATE oficinas
+SET id=99
+WHERE id=1;
+-- Falla debido a que la fila actua como clave foránea en la tabla de empleadosoficinas
+```
+
+## Actividad 3
+```
+Intenta insertar un registro en la tabla pagos asignándole un idPedido que no exista en la tabla pedidos. Documenta la infracción de clave ajena.
+```
+```mysql
+INSERT INTO pagos(id, idPedido, cantidad, fecha) 
+VALUES (30001,20000,120,"2025-04-01");
+-- Cannot add or update a child row: a foreign key constraint fails (`nexus`.`pagos`, CONSTRAINT `fk_pag_ped` FOREIGN KEY (`idPedido`) REFERENCES `pedidos` (`id`))
+-- Falla debido a que la clave foranea trata de establecer una referencia hacia idPedido pero no existe un id en la tabla pedido que valga 20000
+```
+# Nivel 2: Acciones en Cascada (CASCADE)
+## Actividad 4
+```
+Configura (mediante ALTER TABLE) la relación entre pedidos y detallesPedidos para que sea ON DELETE CASCADE. 
+A continuación, borra el pedido con id = 1 y comprueba qué ha pasado con sus líneas de detalle.
+```
+```mysql
+SHOW KEYS FROM  detallespedidos
+-- para obtener el constraint de la clave foranea de detallespedidos
+-- 1º Eliminar la FK existente
+ALTER TABLE detallespedidos
+DROP FOREIGN KEY fk_det_prod;
+-- 2º Recrearla con ON DELETE CASCADE
+ALTER TABLE detallespedidos
+ADD CONSTRAINT fk_det_prod
+FOREIGN KEY (idProducto) REFERENCES productos(id)
+ON DELETE CASCADE;
+```
+## Actividad 5
+```
+Modifica la clave ajena en la tabla direcciones para que sea ON UPDATE CASCADE respecto a clientes. 
+Cambia el id de un cliente y verifica si el cambio se ha propagado automáticamente a sus direcciones.
+```
+```mysql
+-- para obtener el constraint de la clave foranea de detallespedidos
+-- 1º Eliminar la FK existente
+ALTER TABLE direcciones
+DROP FOREIGN KEY fk_direcciones_clientes;
+-- 2º Recrearla con ON UPDATE CASCADE
+ALTER TABLE direcciones
+ADD CONSTRAINT fk_direcciones_clientes
+FOREIGN KEY (idCliente) REFERENCES clientes(id)
+ON UPDATE CASCADE;
+```
+# Nivel 3: Gestión de Nulos (SET NULL)
+## Actividad 6
+```
+En la tabla clientes, el campo idDireccionEntrega puede ser nulo. Configura la relación para que sea ON DELETE SET NULL. 
+Borra una dirección que esté siendo usada como entrega y comprueba si el cliente ahora tiene ese campo a NULL.
+```
+```mysql
+SHOW KEYS FROM  clientes;
+ALTER TABLE clientes
+DROP FOREIGN KEY fk_cli_entr;
+ALTER TABLE clientes
+ADD CONSTRAINT fk_cli_entr
+FOREIGN KEY (idDireccionEntrega) REFERENCES direcciones(id)
+ON DELETE SET NULL;
+```
+## Actividad 7
+```
+Si un empleado deja de pertenecer a una oficina porque esta se elimina de la tabla oficinas, queremos que el registro en empleadosOficinas 
+mantenga al empleado pero con la oficina a NULL. ¿Es esto posible según la definición de tu clave primaria compuesta? Justifica la respuesta.
+```
+```mysql
+-- La tabla empleadosOficinas tiene una clave primaria compuesta por (idEmpleado, idOficina). Las columnas que forman parte de una PRIMARY KEY tienen implícitamente la restricción NOT NULL — ningún campo de una clave primaria puede ser NULL en ningún motor SQL.
+Por tanto, aunque se defina ON DELETE SET NULL en la FK hacia oficinas, MariaDB rechazará la operación con un error, porque establecer idOficina = NULL violaría la restricción de clave primaria.
+```
+# Nivel 4: Gestión de Nulos (SET NULL)
+## Actividad 8
+```
+Queremos eliminar un producto del catálogo sin perder su histórico en pedidos antiguos. 
+Propón una estrategia: ¿usarías RESTRICT, SET NULL o borrado lógico (activo = 0)? 
+Aplica la solución técnica elegida.
+```
+```mysql
+-- Elegiría un borrado lógico de activo/disponible =0 para en un futuro porder modificarlo sin complicaciones ni necesidad de volver a crearlo
+Alter table productos
+add column activo boolean not null default 0;
+```
