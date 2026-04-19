@@ -99,3 +99,13 @@ Aplica la solución técnica elegida.
 Alter table productos
 add column activo boolean not null default 0;
 ```
+## Actividad 9
+```
+Identifica en el script de creación de Nexus todas las relaciones que no tienen definida una acción específica. 
+Recuerda que, por defecto, MySQL aplica RESTRICT. 
+Cámbialas a la opción que consideres más segura para un entorno de facturación real.
+```
+```mysql
+En un entorno de facturación real, estos datos no han de ser eliminados por seguridad tanto del empresario como de los trabajadores/clientes.
+Por tanto, la mejor opción para emplear es la que viene establecida por defecto, RESTRICT
+```
