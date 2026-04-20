@@ -1,0 +1,127 @@
+# BLOQUE 1
+# Ejercicio 1 
+```
+Inserta un nuevo cliente con los datos siguientes: nombre Marta, apellidos Sanchez Ruiz, email
+marta.sanchez@mail.com, ciudad Algeciras, fecha de alta hoy (usa CURDATE()). El campo activo debe tomar
+su valor por defecto. Especifica siempre las columnas
+```
+```mysql
+INSERT INTO clientes(nombre, apellidos, email, ciudad, fecha_alta, activo) 
+VALUES ("Marta", "Sanchez Ruiz", "marta.sanchez@mail.com", "Algeciras", CURDATE(),DEFAULT)
+```
+# Ejercicio 2
+```
+Inserta un cliente del que no se conoce el email: nombre Oleg, apellidos Ivanov, ciudad Algeciras, fecha de alta
+2025-04-01. El email debe quedar como NULL y el campo activo debe usar DEFAULT explícitamente.
+```
+```mysql
+INSERT INTO clientes(nombre, apellidos, email, ciudad, fecha_alta, activo) 
+VALUES ("Oleg", "Ivanov", NULL,"Algeciras", "2025-04-01", DEFAULT)
+```
+# Ejercicio 3
+```
+Inserta en una única sentencia tres nuevas categorías: 'Gaming', 'Audio' y 'Accesorios', todas activas.
+```
+```mysql
+INSERT INTO categorias(nombre, id, activa) 
+VALUES ("Gaming", default, 1),
+		("Audio", default, 1),
+        ("Accesorios", default, 1)
+```
+# Ejercicio 4
+```
+Copia a la tabla clientes_historico los datos de todos los clientes inactivos (activo = 0). La columna
+fecha_baja debe tomar la fecha y hora actual.
+```
+```mysql
+INSERT INTO clientes_historico(apellidos, ciudad, email, fecha_alta, fecha_baja, id, nombre)
+	SELECT apellidos, ciudad, email, fecha_alta,CURDATE(), id, nombre 
+    FROM clientes
+    WHERE activo=0;
+```
+# Ejercicio 5
+```
+Inserta un nuevo empleado llamado Andrea Perez, salario 24000, asignado al departamento cuya ciudad sea
+'Sevilla'. Obtén el id del departamento con una subconsulta dentro de VALUES.
+```
+```mysql
+INSERT INTO empleados(apellidos,id_departamento, nombre, salario)
+	VALUES("Perez",
+           (SELECT id 
+           FROM departamentos
+           WHERE ciudad = "Sevilla"),
+           "Andrea",
+           24000)
+```
+# BLOQUE 2
+# Ejercicio 6 
+```
+Cambia la ciudad del cliente con id = 8 (Juan Sanchez Ortiz) a 'La Linea'.
+```
+```mysql
+UPDATE clientes 
+SET ciudad="La Línea"
+WHERE id=8
+```
+# Ejercicio 7
+```
+Aumenta el precio de todos los productos de la categoría 'Informatica' (id_categoria = 1) un 10%.
+```
+```mysql
+UPDATE productos  
+SET precio=precio*1.1
+WHERE id_categoria=1
+```
+# Ejercicio 8
+```
+Marca como descatalogado = 1 todos los productos cuyo stock sea menor que 5 Y su precio sea mayor que 100.
+```
+```mysql
+UPDATE productos  
+SET descatalogado=1
+WHERE stock<5 AND precio>100
+```
+# Ejercicio 9
+```
+Aplica un descuento del 15% al precio de los productos que cumplan las tres condiciones siguientes: estén en las
+categorías con id 2 ó 4, su precio esté entre 20 y 100, y su nombre contenga la palabra 'LED' o 'BT'.
+```
+```mysql
+UPDATE productos  
+SET precio=precio*0.85
+WHERE (nombre LIKE ("%LED%") OR nombre LIKE("%BT%"))
+	AND id_categoria IN (2,4)
+	AND precio BETWEEN 20 AND 100
+```
+# Ejercicio 10
+```
+A todos los clientes que no tengan email, asígnales el valor 'pendiente@empresa.com'.
+```
+```mysql
+UPDATE clientes 
+SET email='pendiente@empresa.com'
+WHERE email IS NULL
+```
+# Ejercicio 11
+```
+Sube un 5% el salario a los 3 empleados que menos cobran
+```
+```mysql
+UPDATE empleados 
+SET salario=salario*1.05
+WHERE id IN (
+			SELECT id FROm (
+                			SELECT id FROM empleados 
+                			ORDER BY salario ASC 
+                			LIMIT 3
+) as temp
+)
+```
+```mysql
+-- ESTUDIAR-----------------------------------------------------------------------------------------------------------------------------------
+UPDATE empleados e
+JOIN (
+    SELECT id FROM empleados ORDER BY salario ASC LIMIT 3
+) t ON e.id = t.id
+SET e.salario = e.salario * 1.05;
+```
