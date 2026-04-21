@@ -130,9 +130,9 @@ SET e.salario = e.salario * 1.05;
 Sube un 8% el salario a todos los empleados cuyo departamento esté en la ciudad 'Madrid'
 ```
 ```mysql
-UPDATE empleados em
-SET em.salario=em.salario*1.08
-WHERE em.id_departamento
+UPDATE empleados 
+SET salario=salario*1.08
+WHERE id_departamento IN (SELECT id FROM departamentos where ciudad = "Madrid")
 ```
 # Ejercicio 13
 ```
@@ -150,7 +150,164 @@ Aumenta un 7% el salario de todos los empleados cuyo departamento esté en Madri
 ```mysql
 UPDATE empleados em
 JOIN departamentos de ON em.id_departamento= de.id
-SET em.salario=em.salario*1.08
-WHERE de.ciudad="Madrid"
-
+SET em.salario=em.salario*1.07
+WHERE de.ciudad="Madrid";
+```
+# Ejercicio 15
+```
+Pon a 0 el stock de todos los productos que no aparezcan en ninguna línea de pedido.
+```
+```mysql
+UPDATE productos pr  
+SET pr.stock=0
+WHERE pr.id NOT IN (SELECT distinct id_producto FROM lineas_pedido)
+```
+# BLOQUE 3
+# Ejercicio 16
+```
+Elimina el cliente del histórico cuyo id = 7.
+```
+```mysql
+DELETE FROM clientes
+WHERE id=7
+```
+# Ejercicio 17
+```
+Elimina el pedido con id = 10 usando LIMIT 1 como medida de seguridad.
+```
+```mysql
+DELETE FROM pedidos
+WHERE id=10
+LIMIT 1;
+```
+# Ejercicio 18
+```
+Elimina todos los pedidos en estado 'Cancelado' que tengan más de 90 días de antigüedad, calculados desde el
+momento actual.
+```
+```mysql
+DELETE FROM pedidos
+WHERE estado = "Cancelado" 
+AND TIMEDIFF(fecha, curdate())>90
+```
+# Ejercicio 19
+```
+Elimina de la tabla clientes_historico todos los registros cuyo cliente ya no exista en la tabla principal clientes.
+Después plantea la sentencia equivalente para borrar de clientes aquellos cuya ciudad sea la del cliente con id =
+7, evitando el error 1093.
+```
+```mysql
+DELETE FROM clientes_historico 
+WHERE id NOT IN(SELECT id FROM clientes);
+DELETE FROM clientes 
+WHERE ciudad = (SELECT ciudad 
+				FROM (SELECT ciudad 
+						FROM clientes where id=7) as temp
+				)
+```
+# Ejercicio 20
+```
+Elimina todas las líneas de pedido que pertenezcan a pedidos en estado 'Cancelado', utilizando INNER JOIN.
+```
+```mysql
+DELETE lp FROM lineas_pedido lp
+INNER JOIN pedidos pe ON pe.id = lp.id_pedido
+WHERE pe.estado = "Cancelado"
+```
+# Ejercicio 21
+```
+Vacía por completo la tabla clientes_historico, dejándola además con el AUTO_INCREMENT reseteado. Indica
+qué pasaría si intentases hacer ROLLBACK después (no hace falta ejecutarlo).
+```
+```mysql
+TRUNCATE TABLE clientes_historico 
+```
+# BLOQUE 4
+# Ejercicio 22
+```
+Da de baja lógicamente al cliente con id = 4: ponlo como inactivo, sin eliminarlo físicamente.
+```
+```mysql
+UPDATE clientes
+SET activo=0
+WHERE id=4
+```
+# Ejercicio 23
+```
+Mueve al histórico todos los clientes inactivos y, a continuación, bórralos de la tabla principal. Asegúrate de no
+romper la integridad referencial (primero mover, luego ocuparte de los hijos). Como los clientes inactivos podrían
+tener pedidos, limita el ejercicio a clientes inactivos y sin pedidos.
+```
+```mysql
+INSERT INTO clientes_historico
+SELECT * FROM clientes c
+WHERE c.activo = 0
+  AND NOT EXISTS (
+      SELECT 1 FROM pedidos p WHERE p.id_cliente = c.id
+  );
+DELETE c FROM clientes c
+WHERE c.activo = 0
+  AND NOT EXISTS (
+      SELECT 1 FROM pedidos p WHERE p.id_cliente = c.id
+  );
+```
+# Ejercicio 24
+```
+Anonimiza los datos personales del cliente con id = 5, dejando a NULL nombre, apellidos y email, pero
+conservando la ciudad, la fecha de alta y la relación con sus pedidos.
+```
+```mysql
+UPDATE clientes 
+SET nombre = NULL,
+	apellidos = NULL,
+    email=NULL
+WHERE id=5;
+```
+# Ejercicio 25
+```
+El departamento con id = 5 (Marketing) se va a cerrar, pero los empleados deben permanecer en la empresa.
+Desvincula a esos empleados del departamento (sin eliminarlos) y después borra el departamento.
+```
+```mysql
+UPDATE empleados 
+SET id_departamento = NULL
+WHERE id_departamento=5;
+DELETE FROM departamentos 
+WHERE id = 5;
+```
+# BLOQUE 5
+# Ejercicio 26
+```
+Intenta borrar el cliente con id = 1 (tiene pedidos asociados). Explica con una única frase el resultado obtenido
+```
+```mysql
+DELETE FROM clientes WHERE id=1;
+-- Error debido a que id cliente actua como clave foranea/clave primaria de otra tabla, con la restriccion por defecto de RESTRICT
+```
+# Ejercicio 27
+```
+Elimina completamente al cliente con id = 10, junto con todos sus pedidos (y líneas asociadas). Hazlo siguiendo el
+orden correcto: primero los nietos, luego los hijos, finalmente el padre.
+```
+```mysql
+DELETE lp FROM lineas_pedido lp
+INNER JOIN pedidos pe ON pe.id=lp.id_pedido
+WHERE pe.id_cliente=10;
+DELETE FROM pedidos WHERE id_cliente =10;
+DELETE FROM clientes WHERE id=10;
+```
+# BLOQUE 6
+# Ejercicio 28
+```
+Simula el alta de un pedido completo del cliente id=2 dentro de una transacción: inserta primero la cabecera del
+pedido y a continuación dos líneas (producto 1, cantidad 2 y producto 2, cantidad 1). Confirma los cambios solo si
+todo ha ido bien.
+```
+```mysql
+START TRANSACTION;
+INSERT INTO pedidos(fecha, id_cliente,total)
+VALUES(CURDATE(),2,100);
+INSERT INTO lineas_pedido(id_pedido, id_producto, cantidad)
+VALUES(10,1,2),(10,2,1);
+COMMIT;
 ```
